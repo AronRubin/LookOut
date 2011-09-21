@@ -1,0 +1,4 @@
+content lookout                 jar:chrome/lookout.jar!/content/
+locale  lookout en-US           jar:chrome/lookout.jar!/locale/en-US/
+skin    lookout classic/1.0     jar:chrome/lookout.jar!/skin/
+overlay chrome://messenger/content/mailWindowOverlay.xul chrome://lookout/content/lookout.xul
