@@ -488,7 +488,7 @@ var lookout_lib = {
     
     // Make sure other global init has finished e.g. messageHeaderSink
     // has been defined
-    if( messageHeaderSink ) {
+    if( typeof messageHeaderSink != 'undefined' && messageHeaderSink ) {
       lookout_lib.orig_onEndAllAttachments = messageHeaderSink.onEndAllAttachments;
       messageHeaderSink.onEndAllAttachments = lookout_lib.on_end_all_attachments;
     } else {
@@ -512,15 +512,15 @@ var lookout_lib = {
     
     // FIXME - fix mozilla so there is a cleaner way here
     // monkey patch the openAttachment and saveAttachment functions
-    if( openAttachment ) {
+    if( typeof openAttachment != 'undefined' && openAttachment ) {
       lookout_lib.orig_openAttachment = openAttachment;
       openAttachment = lookout_lib.open_attachment;
     }
-    if( saveAttachment ) {
+    if( typeof saveAttachment != 'undefined' && saveAttachment ) {
       lookout_lib.orig_saveAttachment = saveAttachment;
       saveAttachment = lookout_lib.save_attachment;
     }
-    if( cloneAttachment ) {
+    if( typeof cloneAttachment != 'undefined' && cloneAttachment ) {
       lookout_lib.orig_cloneAttachment = cloneAttachment;
       cloneAttachment = lookout_lib.clone_attachment;
     }
@@ -582,8 +582,8 @@ var lookout_lib = {
 	
 	var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
                    .QueryInterface( Components.interfaces.nsIMsgMessageService );
-	
-	mms.openAttachment( attachment.contentType, attachment.displayName,
+	var attname = attachment.name ? attachment.name : attachment.displayName;
+	mms.openAttachment( attachment.contentType, attname,
 			    attachment.url, stream_listener.mMsgUri, stream_listener, 
 			    null, null );
       }
@@ -673,9 +673,11 @@ var lookout_lib = {
     stream_listener.mMsgHdr = lookout_lib.msg_hdr_for_current_msg( stream_listener.mMsgUri );
     stream_listener.action_type = LOOKOUT_ACTION_OPEN;
     
+    var attname = attachment.name ? attachment.name : attachment.displayName;
+
     lookout.log_msg( "open_attachment\nParent: "+(attachment.parent == null ? "-" : attachment.parent.url)
               +"\nContent-Type: "+attachment.contentType.split("\0")[0]
-              +"\nDisplayname: "+attachment.displayName.split("\0")[0]
+              +"\nDisplayname: "+attname.split("\0")[0]
               +"\nPart_ID: "+attachment.part_id
               +"\nisExternal: "+attachment.isExternalAttachment
               +"\nURL: "+attachment.url
@@ -683,7 +685,8 @@ var lookout_lib = {
     var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
               .QueryInterface( Components.interfaces.nsIMsgMessageService );
     
-    mms.openAttachment( attachment.parent.contentType, attachment.parent.displayName,
+    attname = attachment.parent.name ? attachment.parent.name : attachment.parent.displayName;
+    mms.openAttachment( attachment.parent.contentType, attname,
 			attachment.parent.url, stream_listener.mMsgUri, stream_listener, 
 			null, null );
   },
@@ -710,16 +713,19 @@ var lookout_lib = {
     stream_listener.mMsgHdr = lookout_lib.msg_hdr_for_current_msg( stream_listener.mMsgUri );
     stream_listener.action_type = LOOKOUT_ACTION_SAVE;
     
+    var attname = attachment.name ? attachment.name : attachment.displayName;
+
     lookout.log_msg( "save_attachment\nParent: "+(attachment.parent == null ? "-" : attachment.parent.url)
               +"\nContent-Type: "+attachment.contentType.split("\0")[0]
-              +"\nDisplayname: "+attachment.displayName.split("\0")[0]
+              +"\nDisplayname: "+attname.split("\0")[0]
               +"\nPart_ID: "+attachment.part_id
               +"\nisExternal: "+attachment.isExternalAttachment
               +"\nURL: "+attachment.url
               +"\nmMsgUri: "+stream_listener.mMsgUri, 7 );
     var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
               .QueryInterface( Components.interfaces.nsIMsgMessageService );
-    mms.openAttachment( attachment.parent.contentType, attachment.parent.displayName,
+    attname = attachment.parent.name ? attachment.parent.name : attachment.parent.displayName;
+    mms.openAttachment( attachment.parent.contentType, attname,
 			attachment.parent.url, stream_listener.mMsgUri, stream_listener, 
 			null, null );
   },

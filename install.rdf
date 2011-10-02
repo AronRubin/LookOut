@@ -3,7 +3,7 @@
   <Description about="urn:mozilla:install-manifest">	
     <em:id>lookout@aron.rubin</em:id>	
     <em:name>LookOut</em:name>	
-    <em:version>1.2.12</em:version>
+    <em:version>1.2.13</em:version>
     <em:creator>Aron Rubin</em:creator>
     <em:description>LookOut reads and integrates TNEF encoded parts in emails</em:description>
     <em:homepageURL>http://lookout.mozdev.org</em:homepageURL>
