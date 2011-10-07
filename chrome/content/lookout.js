@@ -310,7 +310,7 @@ LookoutStreamListener.prototype = {
     }
 
     if( this.mMsgUri != fsm ) {
-      lookout.log_msg( "LookOut: data available wrong", 5 );
+      lookout.log_msg( "LookOut: data available wrong", 50 ); //MKA 5
       aRequest.cancel( Components.results.NS_BINDING_ABORTED );
       return;
     }
@@ -515,14 +515,23 @@ var lookout_lib = {
     if( typeof openAttachment != 'undefined' && openAttachment ) {
       lookout_lib.orig_openAttachment = openAttachment;
       openAttachment = lookout_lib.open_attachment;
+      lookout.log_msg( "LookOut: Registering openAttachment hook\n", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering openAttachment failed\n", 2);
     }
     if( typeof saveAttachment != 'undefined' && saveAttachment ) {
       lookout_lib.orig_saveAttachment = saveAttachment;
       saveAttachment = lookout_lib.save_attachment;
+      lookout.log_msg( "LookOut: Registering saveAttachment hook\n", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering saveAttachment failed\n", 2);
     }
     if( typeof cloneAttachment != 'undefined' && cloneAttachment ) {
       lookout_lib.orig_cloneAttachment = cloneAttachment;
       cloneAttachment = lookout_lib.clone_attachment;
+      lookout.log_msg( "LookOut: Registering cloneAttachment hook\n", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering cloneAttachment failed\n", 2);
     }
   },
 
