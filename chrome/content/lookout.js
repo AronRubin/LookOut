@@ -310,7 +310,7 @@ LookoutStreamListener.prototype = {
     }
 
     if( this.mMsgUri != fsm ) {
-      lookout.log_msg( "LookOut: data available wrong", 5 );
+      lookout.log_msg( "LookOut: data available wrong", 15 ); //MKA 5
       aRequest.cancel( Components.results.NS_BINDING_ABORTED );
       return;
     }
@@ -323,6 +323,7 @@ LookoutStreamListener.prototype = {
   },
 
   onTnefStart: function ( filename, content_type, length, date ) {
+    lookout.log_msg( "LookOut: Entering onTnefStart()", 6 ); //MKA
     var mimeurl = this.mAttUrl + "." + this.mPartId;
     var basename = lookout.basename( filename );
     
@@ -374,19 +375,19 @@ LookoutStreamListener.prototype = {
 	}
       }
     }
-    lookout.log_msg( "LookOut: onTnefStart\nParent: " + this.attachment +
-		"\nmMsgUri: "+this.mMsgUri +
-		"\nrequested Part_ID: " + this.req_part_id +
-		"\nPart_ID: " + this.mPartId +
-		"\nDisplayname: " + filename.split("\0")[0] +
-		"\nContent-Type: " + content_type.split("\0")[0] +
-		"\nLength: " + length +
-		"\nURL: " + (this.cur_url ? this.cur_url.spec : "") +
-		"\nmimeurl: " + (mimeurl ? mimeurl : ""), 7 );
+    lookout.log_msg( "LookOut: Parent: " + this.attachment
+		   + "\n         mMsgUri: " + this.mMsgUri
+                   + "\n         requested Part_ID: " + this.req_part_id
+		   + "\n         Part_ID: " + this.mPartId
+		   + "\n         Displayname: " + filename.split("\0")[0]
+		   + "\n         Content-Type: " + content_type.split("\0")[0]
+		   + "\n         Length: " + length
+		   + "\n         URL: " + (this.cur_url ? this.cur_url.spec : "")
+		   + "\n         mimeurl: " + (mimeurl ? mimeurl : ""), 7 );
   },
 
   onTnefEnd: function ( ) {
-    lookout.log_msg( "LookOut: onTnefEnd", 8 );
+    lookout.log_msg( "LookOut: Entering onTnefEnd()", 6 );
     if( this.cur_outstrm )
       this.cur_outstrm.close();
     
@@ -474,14 +475,20 @@ var DecapsulateMsgHeaderSink = {
 */
 
 var lookout_lib = {
-  orig_openAttachment: null,
-  orig_saveAttachment: null,
   orig_onEndAllAttachments: null,
   orig_processHeaders: null,
+
+// ** TODO MKA ** remove this declarations ** start
+// **          ** check code before for other uses!
+  orig_openAttachment: null,
+  orig_saveAttachment: null,
   orig_cloneAttachment: null,
+// ** TODO MKA ** remove this declarations ** end
+
   init_wait: 0,
 
   onload: function() {
+    lookout.log_msg( "LookOut: Entering onload()", 6 ); //MKA
     // FIXME - Register onEndAllAttachments listener with messageHeaderSink
     // For now monkey patch messageHeaderSink.onEndAllAttachments and messageHeaderSink.processHeaders
     // (see mail/base/content/msgHdrOverlay.js).
@@ -491,13 +498,14 @@ var lookout_lib = {
     if( typeof messageHeaderSink != 'undefined' && messageHeaderSink ) {
       lookout_lib.orig_onEndAllAttachments = messageHeaderSink.onEndAllAttachments;
       messageHeaderSink.onEndAllAttachments = lookout_lib.on_end_all_attachments;
+      lookout.log_msg( "LookOut: Registering messageHeaderSink.onEndAllAttachments hook", 6 );  //MKA
     } else {
+      lookout.log_msg( "LookOut: Registering messageHeaderSink.onEndAllAttachments failed", 2 );
       if ( lookout_lib.init_wait < LOOKOUT_WAIT_MAX ) {
 	lookout_lib.init_wait++;
-	lookout.log_msg( "LookOut: waiting for global init ("  + lookout_lib.init_wait + ")");
+	lookout.log_msg( "LookOut: waiting for global init ("  + lookout_lib.init_wait + ")" );
 	setTimeout( lookout_lib.onload, LOOKOUT_WAIT_TIME );
 	return;
-	
       } else {
 	lookout.log_msg( "LookOut: Warning initialisation incomplete", 2 );
       }
@@ -510,20 +518,39 @@ var lookout_lib = {
     listener.onEndHeaders = lookout_lib.on_end_headers;
     gMessageListeners.push( listener );
     
+// ** TODO MKA ** remove this code ** start
+
     // FIXME - fix mozilla so there is a cleaner way here
-    // monkey patch the openAttachment and saveAttachment functions
+    // monkey patch the openAttachment and saveAttachment functions -- general solution for every attachments
+
+    // Fixed in version 1.13 (at least): the hook is added only to TNEF attachments in function
+    //                                   add_sub_attachment_to_list()
+    // openAttachment and saveAttachment functions are no longer available globally after Thunderbird 7.
+    // So this part is obsolate.
+
     if( typeof openAttachment != 'undefined' && openAttachment ) {
+      // lookout.log_msg( "LookOut: openAttachment is found as\n\n" + openAttachment, 10);
       lookout_lib.orig_openAttachment = openAttachment;
       openAttachment = lookout_lib.open_attachment;
+      lookout.log_msg( "LookOut: Registering openAttachment hook", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering openAttachment failed", 2);
     }
     if( typeof saveAttachment != 'undefined' && saveAttachment ) {
       lookout_lib.orig_saveAttachment = saveAttachment;
       saveAttachment = lookout_lib.save_attachment;
+      lookout.log_msg( "LookOut: Registering saveAttachment hook", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering saveAttachment failed", 2);
     }
     if( typeof cloneAttachment != 'undefined' && cloneAttachment ) {
       lookout_lib.orig_cloneAttachment = cloneAttachment;
       cloneAttachment = lookout_lib.clone_attachment;
+      lookout.log_msg( "LookOut: Registering cloneAttachment hook", 6);  //MKA
+    } else {
+      lookout.log_msg( "LookOut: Registering cloneAttachment failed", 2);
     }
+// ** TODO MKA ** remove this code ** end
   },
 
   msg_hdr_for_current_msg: function( msg_uri ) {
@@ -556,6 +583,7 @@ var lookout_lib = {
   },
 
   scan_for_tnef: function ( ) {
+    lookout.log_msg( "LookOut: Entering scan_for_tnef()", 6);
     var messenger2 = Components.classes["@mozilla.org/messenger;1"]
                     .getService(Components.interfaces.nsIMessenger);
     
@@ -591,9 +619,10 @@ var lookout_lib = {
   },
 
   add_sub_attachment_to_list: function ( parent, content_type, display_name, part_id, atturl, msguri, length ) {
+    lookout.log_msg( "LookOut: Entering add_sub_attachment_to_list()", 6);
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
     
-    /*
+/*
     var attachmentList = document.getElementById( 'attachmentList' );
     var i = 0;
     
@@ -603,25 +632,58 @@ var lookout_lib = {
     // if we found our list item then we are done
     if( i >= attachmentList.childNodes.length )
       return;
-    */
-    lookout.log_msg( " content_type:"+content_type +", atturl:"+ atturl +",  display_name:"+ display_name +", msguri:"+ msguri, 8 );
+*/
+    lookout.log_msg( "LookOut: content_type:" + content_type
+                   + "\n         atturl:" + atturl
+                   + "\n         display_name:" + display_name
+                   + "\n         msguri:" + msguri, 8 );
+
     var attachment = null;
-    if( typeof AttachmentInfo != 'undefined' )
-      var attachment = new AttachmentInfo( content_type, atturl, display_name, msguri, true, length )
-    else
-      var attachment = new createNewAttachmentInfo( content_type, atturl, display_name, msguri, true )
+    if( typeof AttachmentInfo != 'undefined' ) {
+      // New naming -- used since Thunderbird 7.*
+      // http://mxr.mozilla.org/comm-central/source/mail/base/content/msgHdrViewOverlay.js#1642
+      var attachment = new AttachmentInfo( content_type, atturl, display_name, msguri, true, length );
+      lookout.log_msg( "LookOut: Found new object AttachmentInfo ~ Thunderbird 7", 6 );  //MKA
+    }
+    else {
+      // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
+      // http://mxr.mozilla.org/comm-central/source/suite/mailnews/msgHdrViewOverlay.js#1201
+      var attachment = new createNewAttachmentInfo( content_type, atturl, display_name, msguri, true );
+      lookout.log_msg( "LookOut: Found old object createNewAttachmentInfo ~ Seamonkey", 6 );  //MKA
+    }
+
     if( attachment.open ) {
+      // New naming -- used since Thunderbird 7.*
       attachment.lo_orig_open = attachment.open;
       attachment.open = function () {
         lookout_lib.open_attachment( this );
       };
+      lookout.log_msg( "LookOut: Registered own function for attachment.open", 6 );  //MKA
+    } else {
+      // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
+      attachment.lo_orig_open = attachment.openAttachment;
+      attachment.openAttachment = function () {
+        lookout_lib.open_attachment( this );
+      };
+      lookout.log_msg( "LookOut: Registered own function for attachment.openAttachment", 6 );
     }
+
     if( attachment.save ) {
+      // New naming -- used since Thunderbird 7.*
       attachment.lo_orig_save = attachment.save;
       attachment.save = function () {
         lookout_lib.save_attachment( this );
       };
+      lookout.log_msg( "LookOut: Registered own function for attachment.save", 6 );  //MKA
+    } else {
+      // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
+      attachment.lo_orig_save = attachment.saveAttachment;
+      attachment.saveAttachment = function () {
+        lookout_lib.save_attachment( this );
+      };
+      lookout.log_msg( "LookOut: Registered own function for attachment.saveAttachment", 6 );
     }
+
     attachment.parent = parent;
     attachment.part_id = part_id;
     currentAttachments.push( attachment );
@@ -634,7 +696,7 @@ var lookout_lib = {
   // e.g. messageHeaderSink.OnEndAllAttachments
   // (see mail/base/content/msgHdrViewOverlay.js)
   redraw_attachment_view: function ( atturl ) {
-    lookout.log_msg( "Lookout: redraw_attachment_view()", 8 );
+    lookout.log_msg( "Lookout: Entering redraw_attachment_view()", 6 );
     ClearAttachmentList();
     gBuildAttachmentsForCurrentMsg = false;
     // TODO - make sure attachment popup menu is not broken
@@ -650,8 +712,10 @@ var lookout_lib = {
   },
 
   open_attachment: function ( attachment ) {
-    lookout.log_msg( attachment.toSource(), 8 );
+    lookout.log_msg( "LookOut: Entering open_attachment()", 6 ); //MKA
+    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
 
+    // There is no TNEF attachment, use the original OPEN function
     if( !attachment.parent ||
 	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
       if( attachment.lo_orig_open )
@@ -675,23 +739,31 @@ var lookout_lib = {
     
     var attname = attachment.name ? attachment.name : attachment.displayName;
 
-    lookout.log_msg( "open_attachment\nParent: "+(attachment.parent == null ? "-" : attachment.parent.url)
-              +"\nContent-Type: "+attachment.contentType.split("\0")[0]
-              +"\nDisplayname: "+attname.split("\0")[0]
-              +"\nPart_ID: "+attachment.part_id
-              +"\nisExternal: "+attachment.isExternalAttachment
-              +"\nURL: "+attachment.url
-              +"\nmMsgUri: "+stream_listener.mMsgUri, 7 );
+    lookout.log_msg( "LookOut: Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
+                   + "\n         Content-Type: " + attachment.contentType.split("\0")[0]
+                   + "\n         Displayname: " + attname.split("\0")[0]
+                   + "\n         Part_ID: " + attachment.part_id
+                   + "\n         isExternal: " + attachment.isExternalAttachment
+                   + "\n         URL: " + attachment.url
+                   + "\n         mMsgUri: " + stream_listener.mMsgUri, 7 );
     var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
-              .QueryInterface( Components.interfaces.nsIMsgMessageService );
-    
+              .QueryInterface( Components.interfaces.nsIMsgMessageService );   
     attname = attachment.parent.name ? attachment.parent.name : attachment.parent.displayName;
-    mms.openAttachment( attachment.parent.contentType, attname,
-			attachment.parent.url, stream_listener.mMsgUri, stream_listener, 
-			null, null );
+    // http://mxr.mozilla.org/comm-central/source/mailnews/base/public/nsIMsgMessageService.idl#131
+    mms.openAttachment( attachment.parent.contentType  // in string aContentType
+                      , attname                        // in string aFileName
+                      , attachment.parent.url          // in string aUrl
+                      , stream_listener.mMsgUri        // in string aMessageUri
+                      , stream_listener                // in nsISupports aDisplayConsumer
+                      , null                           // in nsIMsgWindow aMsgWindow
+                      , null );                        // in nsIUrlListener aUrlListener
   },
 
   save_attachment: function ( attachment ) {
+    lookout.log_msg( "LookOut: Entering save_attachment()", 6 ); //MKA
+    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
+
+    // There is no TNEF attachment, use the original SAVE function
     if( !attachment.parent ||
 	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
       if( attachment.lo_orig_save )
@@ -703,6 +775,7 @@ var lookout_lib = {
     
     var messenger2 = Components.classes["@mozilla.org/messenger;1"]
                     .getService(Components.interfaces.nsIMessenger);
+
     var stream_listener = new LookoutStreamListener(); 
     stream_listener.req_part_id = attachment.part_id;
     stream_listener.mAttUrl = attachment.parent.url;
@@ -715,22 +788,43 @@ var lookout_lib = {
     
     var attname = attachment.name ? attachment.name : attachment.displayName;
 
-    lookout.log_msg( "save_attachment\nParent: "+(attachment.parent == null ? "-" : attachment.parent.url)
-              +"\nContent-Type: "+attachment.contentType.split("\0")[0]
-              +"\nDisplayname: "+attname.split("\0")[0]
-              +"\nPart_ID: "+attachment.part_id
-              +"\nisExternal: "+attachment.isExternalAttachment
-              +"\nURL: "+attachment.url
-              +"\nmMsgUri: "+stream_listener.mMsgUri, 7 );
+    lookout.log_msg( "LookOut: Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
+                   + "\n         Content-Type: " + attachment.contentType.split("\0")[0]
+                   + "\n         Displayname: " + attname.split("\0")[0]
+                   + "\n         Part_ID: " + attachment.part_id
+                   + "\n         isExternal: " + attachment.isExternalAttachment
+                   + "\n         URL: " + attachment.url
+                   + "\n         mMsgUri: " + stream_listener.mMsgUri, 7 );
     var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
               .QueryInterface( Components.interfaces.nsIMsgMessageService );
     attname = attachment.parent.name ? attachment.parent.name : attachment.parent.displayName;
+// ** TODO MKA ** correct function call ** start
+    // Using the same function as for OPEN and hoping that the user has not set default action
+    // for this file type...
     mms.openAttachment( attachment.parent.contentType, attname,
 			attachment.parent.url, stream_listener.mMsgUri, stream_listener, 
 			null, null );
+/*
+    // [xpconnect wrapped nsIMsgMessageService]
+    // http://mxr.mozilla.org/comm-central/source/mailnews/base/public/nsIMsgMessageService.idl#153
+    mms.SaveMessageToDisk( stream_listener.mMsgUri  // in string aMessageURI
+                         , ???                      // in nsIFile aFile
+                         , false                    // in boolean aGenerateDummyEnvelope
+                         , ??? null                 // in nsIUrlListener aUrlListener
+                         , ???                      // out nsIURI aURL
+                         , ???                      // in boolean canonicalLineEnding
+                         , null );                  // in nsIMsgWindow aMsgWindow
+*/
+// ** TODO MKA ** correct function call ** end
   },
 
+  // Function not used!!!
+  // If needed add hook into add_sub_attachment_to_list()!
   clone_attachment: function( attachment ) {
+    lookout.log_msg( "LookOut: Entering clone_attachment()", 6 ); //MKA
+    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
+
+    // There is no TNEF attachment, use the original CLONE function
     if( !attachment.parent ||
 	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
       return lookout_lib.orig_cloneAttachment( attachment );
