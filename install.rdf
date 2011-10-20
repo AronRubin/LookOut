@@ -1,15 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
-  <Description about="urn:mozilla:install-manifest">	
-    <em:id>lookout@aron.rubin</em:id>	
-    <em:name>LookOut</em:name>	
-    <em:version>1.2.13</em:version>
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>lookout@aron.rubin</em:id>
+    <em:version>1.2.14rc1</em:version>
+    <em:localized>
+      <Description>
+        <em:locale>hu</em:locale>
+        <em:name>NézdMeg! (LookOut)</em:name>
+        <em:description>A LookOut megnyitja és letölthetővé teszi a levelek TNEF kódolással csatolt mellékleteit (általában winmail.dat).</em:description>
+        <em:creator>Rubin, Aron</em:creator>
+        <em:translator>Mergl K. Attila</em:translator>
+      </Description>
+    </em:localized>
+    <em:localized>
+      <Description>
+        <em:locale>de</em:locale>
+        <em:name>Zeig'sMir! (LookOut)</em:name>
+        <em:description>LookOut öffnet die TNEF kodierten Anhänge der Mails (meistens winmail.dat) und ladet die dekodierten Teile herunter.</em:description>
+        <em:creator>Aron Rubin</em:creator>
+        <em:translator>Attila K. Mergl</em:translator>
+      </Description> 
+    </em:localized>
+    <em:name>LookOut</em:name>
+    <em:description>LookOut reads and integrates TNEF encoded parts in emails.</em:description>
     <em:creator>Aron Rubin</em:creator>
-    <em:description>LookOut reads and integrates TNEF encoded parts in emails</em:description>
+    <em:contributor>Attila K. Mergl</em:contributor>
     <em:homepageURL>http://lookout.mozdev.org</em:homepageURL>
     <em:optionsURL>chrome://lookout/content/options.xul</em:optionsURL>
 
-    <!-- thunderbird -->
+    <!-- Thunderbird -->
     <em:targetApplication>
       <Description>
         <em:id>{3550f703-e582-4d05-9a08-453d09bdfdc6}</em:id>
@@ -22,8 +41,8 @@
     <em:targetApplication>
       <Description>
 	<em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
-	<em:minVersion>1.1</em:minVersion>
-	<em:maxVersion>2.3.*</em:maxVersion>
+	<em:minVersion>2.0</em:minVersion>  <!-- Because of changing to toolkit/-style extensions -->
+	<em:maxVersion>2.*</em:maxVersion>
       </Description>
     </em:targetApplication>
 
