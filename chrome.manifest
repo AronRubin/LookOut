@@ -3,9 +3,10 @@ locale  lookout hu              chrome/locale/hu/
 locale  lookout de              chrome/locale/de/
 locale  lookout en-US           chrome/locale/en-US/
 skin    lookout classic/1.0     chrome/skin/
-#overlay chrome://messenger/content/messenger.xul chrome://lookout/content/lookout.xul
 
 # content lookout                 jar:chrome/lookout.jar!/content/
 # locale  lookout en-US           jar:chrome/lookout.jar!/locale/en-US/
+# locale  lookout hu              jar:chrome/lookout.jar!/locale/hu/
+# locale  lookout de              jar:chrome/lookout.jar!/locale/de/
 # skin    lookout classic/1.0     jar:chrome/lookout.jar!/skin/
 overlay chrome://messenger/content/mailWindowOverlay.xul chrome://lookout/content/lookout.xul
