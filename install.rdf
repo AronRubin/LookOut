@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
   <Description about="urn:mozilla:install-manifest">
-    <em:id>lookout@aron.rubin</em:id>
-    <em:version>1.2.14rc1</em:version>
+    <em:id>lookout@addons.mozilla.org</em:id>
+    <em:version>1.2.14</em:version>
+    <em:type>2</em:type>
     <em:localized>
       <Description>
         <em:locale>hu</em:locale>
@@ -21,7 +22,7 @@
         <em:translator>Attila K. Mergl</em:translator>
       </Description> 
     </em:localized>
-    <em:name>LookOut</em:name>
+    <em:name>LookOut+</em:name>
     <em:description>LookOut reads and integrates TNEF encoded parts in emails.</em:description>
     <em:creator>Aron Rubin</em:creator>
     <em:contributor>Attila K. Mergl</em:contributor>
@@ -41,7 +42,7 @@
     <em:targetApplication>
       <Description>
 	<em:id>{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}</em:id>
-	<em:minVersion>2.0</em:minVersion>  <!-- Because of changing to toolkit/-style extensions -->
+	<em:minVersion>1.0</em:minVersion>  <!-- v2.0 changed to toolkit/-style extensions -->
 	<em:maxVersion>2.*</em:maxVersion>
       </Description>
     </em:targetApplication>

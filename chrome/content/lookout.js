@@ -522,12 +522,13 @@ var lookout_lib = {
 // ** TODO MKA ** remove this code ** start
 
     // FIXME - fix mozilla so there is a cleaner way here
-    // monkey patch the openAttachment and saveAttachment functions -- general solution for every attachments
+    // monkey patch the openAttachment and saveAttachment functions
 
-    // Fixed in version 1.13 (at least): the hook is added only to TNEF attachments in function
-    //                                   add_sub_attachment_to_list()
-    // openAttachment and saveAttachment functions are no longer available globally after Thunderbird 7.
-    // So this part is obsolate.
+    // It was a general solution for every attachments.
+    // Fixed in version 1.2.12: the hook is added only to TNEF attachments
+    //                          in function add_sub_attachment_to_list()
+    // openAttachment and saveAttachment functions are no longer available
+    // globally after Thunderbird 7. So this part is obsolate.
 
     if( typeof openAttachment != 'undefined' && openAttachment ) {
       // lookout.log_msg( "LookOut: openAttachment is found as\n\n" + openAttachment, 10);

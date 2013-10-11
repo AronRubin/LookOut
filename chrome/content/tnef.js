@@ -11,7 +11,7 @@
  *   Calendaring and contact data is transcoded to standards formats.
  */
 
-const debugLevel = 10; //MKA 5;
+const debugLevel = 10; //MKA Set 5 to switch off;
 
 
 const LVL_MESSAGE    = 0x1;
