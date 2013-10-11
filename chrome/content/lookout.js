@@ -378,7 +378,7 @@ LookoutStreamListener.prototype = {
     }
     lookout.log_msg( "LookOut: Parent: " + this.attachment
 		   + "\n         mMsgUri: " + this.mMsgUri
-                   + "\n         requested Part_ID: " + this.req_part_id
+		   + "\n         requested Part_ID: " + this.req_part_id
 		   + "\n         Part_ID: " + this.mPartId
 		   + "\n         Displayname: " + filename.split("\0")[0]
 		   + "\n         Content-Type: " + content_type.split("\0")[0]
@@ -395,45 +395,69 @@ LookoutStreamListener.prototype = {
     if( !this.req_part_id || this.mPartId == this.req_part_id ) {
       switch( this.action_type ) {
       case LOOKOUT_ACTION_SAVE:
-	lookout.log_msg( "Saving attachment '" + this.cur_url.spec + "'", 7 );
-	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec, this.cur_filename, this.mMsgUri, true );
-	break;
+        lookout.log_msg( "Saving attachment '" + this.cur_url.path + "'", 7 );
+        //	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec,
+        //                            this.cur_filename, this.mMsgUri, true );
+        try {
+          var file = this.cur_url.QueryInterface(Components.interfaces.nsIFileURL).file;  		
+        } catch (ex) {
+          alert("LookOut: error creating file : " + this.cur_url.path + " : " + ex);
+        }
+        var nsIFilePicker = Components.interfaces.nsIFilePicker;
+        var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+        fp.init(window, "Select a File", nsIFilePicker.modeSave);
+        fp.appendFilters(nsIFilePicker.filterAll);
+        fp.defaultString = this.cur_filename;
+        var res = fp.show();
+        if (res != nsIFilePicker.returnCancel){
+          try {
+            file.moveTo(fp.displayDirectory, fp.file.leafName);
+          } catch(ex) {
+            alert("LookOut: error moving file : " + fp.displayDirectory.path + " : "
+                  + fp.file.leafName + " : " + ex);
+          }
+        }
+      break;
+
       case LOOKOUT_ACTION_OPEN:
-	lookout.log_msg( "Opening attachment '"+ this.cur_url.spec+"'", 7 );
-	if( lookout.get_bool_pref( "direct_to_calendar" ) &&
-	    this.cur_content_type == "text/calendar" && this.cur_outstrm_listener ) {
-	  var cal_items = new Array();
+        lookout.log_msg( "Opening attachment '"+ this.cur_url.spec+"'", 7 );
+        if (lookout.get_bool_pref( "direct_to_calendar" )
+            && this.cur_content_type == "text/calendar"
+            && this.cur_outstrm_listener) {
+          var cal_items = new Array();
+
+          try {
+            var instrm = this.cur_outstrm.QueryInterface(Components.interfaces.nsIStorageStream).newInputStream( 0 );
+            cal_items = this.cur_outstrm_listener.importFromStream( instrm, { } );
+            instrm.close();
+          } catch (ex) {
+            lookout.log_msg( "LookOut: error opening calendar stream: " + ex, 3 );
+          }
+          var count_o = new Object();
+          var cal_mgr = Components.classes["@mozilla.org/calendar/manager;1"].getService(Components.interfaces.calICalendarManager);
+          var calendars = cal_mgr.getCalendars( count_o );
 	  
-	  try {
-	    var instrm = this.cur_outstrm.QueryInterface(Components.interfaces.nsIStorageStream).newInputStream( 0 );
-	    cal_items = this.cur_outstrm_listener.importFromStream( instrm, { } );
-	    instrm.close();
-	  } catch (ex) {
-	    lookout.log_msg( "LookOut: error opening calendar stream: " + ex, 3 );
-	  }
-	  var count_o = new Object();
-	  var cal_mgr = Components.classes["@mozilla.org/calendar/manager;1"].getService(Components.interfaces.calICalendarManager);
-	  var calendars = cal_mgr.getCalendars( count_o );
-	  
-	  if (count_o.value == 1) {
+          if (count_o.value == 1) {
             // There's only one calendar, so it's silly to ask what calendar
             // the user wants to import into.
-	    lookout.cal_add_items( calendars[0], cal_items, this.cur_filename );
-	  } else {
-	    var sbs = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
-	    var cal_strbundle = sbs.createBundle("chrome://calendar/locale/calendar.properties");
+            lookout.cal_add_items( calendars[0], cal_items, this.cur_filename );
+          } else {
+            var sbs = Components.classes["@mozilla.org/intl/stringbundle;1"].getService(Components.interfaces.nsIStringBundleService);
+            var cal_strbundle = sbs.createBundle("chrome://calendar/locale/calendar.properties");
 	    
-	    // Ask what calendar to import into
-	    var args = new Object();
-	    args.onOk = function putItems(aCal) { lookout.cal_add_items( aCal, cal_items, this.cur_filename ); };
-	    args.promptText = cal_strbundle.GetStringFromName( "importPrompt" );
-	    openDialog( "chrome://calendar/content/chooseCalendarDialog.xul",
-			"_blank", "chrome,titlebar,modal,resizable", args );
-	  }
-	} else {
-	  messenger.openAttachment( this.cur_content_type, this.cur_url.spec, this.cur_filename, this.mMsgUri, true );
-	}
-	break;
+            // Ask what calendar to import into
+            var args = new Object();
+            args.onOk = function putItems(aCal) { lookout.cal_add_items( aCal, cal_items, this.cur_filename ); };
+            args.promptText = cal_strbundle.GetStringFromName( "importPrompt" );
+            openDialog( "chrome://calendar/content/chooseCalendarDialog.xul",
+                        "_blank", "chrome,titlebar,modal,resizable", args );
+          }
+        } else {
+          messenger.openAttachment( this.cur_content_type, this.cur_url.spec,
+	                                  this.cur_filename, this.mMsgUri, true );
+        }
+      break;
+
       }
     }
     
