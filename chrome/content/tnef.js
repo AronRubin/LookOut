@@ -11,7 +11,7 @@
  *   Calendaring and contact data is transcoded to standards formats.
  */
 
-const debugLevel = 10; //MKA Set 5 to switch off;
+const debugLevel = 7; //MKA Set 5 to switch off;
 
 
 const LVL_MESSAGE    = 0x1;
@@ -516,7 +516,8 @@ function tnef_file_write_stream( file, outstrm ) {
 
 
 function tnef_file_notify( file, listener, is_final ) {
-  tnef_log_msg( "LookOut: notifying listener of " + file.name + ", pos = " + file.position +
+  tnef_log_msg( "TNEF: Entering tnef_file_notify()", 6); //MKA
+  tnef_log_msg( "TNEF: Notifying listener of " + file.name + ", pos = " + file.position +
 	     ", has data = " + (file.data ? "true" : "false") +
 	     ", is final = " + is_final, 7 );
 
@@ -1788,6 +1789,8 @@ function tnef_pack_parse_stream( instrm, msg_header, listener, prev_pack ) {
   var sig = 0;
   var key = 0;
   var pkg = null;
+
+  tnef_log_msg( "TNEF: Entering tnef_pack_parse_stream()", 6); //MKA
   
   if( prev_pack ) {
     pkg = prev_pack;
@@ -1816,7 +1819,7 @@ function tnef_pack_parse_stream( instrm, msg_header, listener, prev_pack ) {
   while( pkg.cur_attr && tnef_pack_data_left( instrm ) ) {
     if( pkg.cur_attr.name == TNEF_ATTR_OEM_CODEPAGE ) {
       pkg.code_page = GETINT32( pkg.cur_attr.buf );
-      tnef_log_msg( "Lookout: OEM Code Page = " + pkg.code_page, 7 );
+      tnef_log_msg( "TNEF: OEM Code Page = " + pkg.code_page, 7 );
     }
     // This signals the beginning of a file
     if( pkg.cur_attr.name == TNEF_ATTR_ATTACH_REND_DATA ) {

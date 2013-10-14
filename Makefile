@@ -9,6 +9,7 @@ MANIF_STR = ">>> Did you change back the jar directive in chrome.manifest?"
 ZIP_CMD = zip -r   # archive recursively (the defaults directory)
                    # -f could be used to update only if the xpi archive exists permanently 
 XPI_FILE = lookout.xpi
+LIC_FILE = LICENSE
 CHRO_DIR = chrome
 DEFA_DIR = defaults
 MAN_FILE = chrome.manifest
@@ -25,7 +26,7 @@ jar:                                         # Generating the JAR archive
 	cd $(CHRO_DIR) && make jar
 
 xpi: $(JAR_FILE) $(MAN_FILE) $(INS_FILE)     # Generating the XPI archive
-	$(ZIP_CMD) $(XPI_FILE) $(JAR_FILE) $(DEFA_DIR)/* $(MAN_FILE) $(INS_FILE)
+	$(ZIP_CMD) $(XPI_FILE) $(JAR_FILE) $(DEFA_DIR)/* $(MAN_FILE) $(INS_FILE) $(LIC_FILE)
 
 clean:
 	rm -f $(XPI_FILE) $(JAR_FILE)

@@ -17,10 +17,12 @@ JS_FILES := $(wildcard $(JAR_BASE)/$(CONT_DIR)/*.js)
 XUL_FILES := $(wildcard $(JAR_BASE)/$(CONT_DIR)/*.xul)
 LOC_FILES := $(wildcard $(JAR_BASE)/$(LOCA_DIR)/*)
 CSS_FILES := $(wildcard $(JAR_BASE)/$(SKIN_DIR)/*.css)
+ICO_FILES := $(wildcard $(JAR_BASE)/$(SKIN_DIR)/LOicon*.png)
 
 all: jar
 
-jar: $(JS_FILES) $(XUL_FILES) $(LOC_FILES) $(CSS_FILES)  # Generating the JAR archive
-	$(JAR_CMD) $(JAR_FILE) $(JS_FILES) $(XUL_FILES) $(LOC_FILES) $(CSS_FILES)
+# Generating the JAR archive
+jar: $(JS_FILES) $(XUL_FILES) $(LOC_FILES) $(CSS_FILES) $(ICO_FILES)
+	$(JAR_CMD) $(JAR_FILE) $(JS_FILES) $(XUL_FILES) $(LOC_FILES) $(CSS_FILES) $(ICO_FILES)
 
 

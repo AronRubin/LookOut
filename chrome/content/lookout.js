@@ -336,11 +336,11 @@ LookoutStreamListener.prototype = {
     
     
     if( this.action_type == LOOKOUT_ACTION_SCAN ) {
-      lookout.log_msg( "adding attachment: " + mimeurl, 7 );
+      lookout.log_msg( "LookOut: Adding attachment: " + mimeurl, 7 );
       lookout_lib.add_sub_attachment_to_list( this.attachment, content_type, filename,
                                               this.mPartId, mimeurl, this.mMsgUri, length );
     } else {
-      lookout.log_msg( "open or save: " + this.mAttUrl + "." + this.mPartId, 7 );
+      lookout.log_msg( "LookOut: open or save: " + this.mAttUrl + "." + this.mPartId, 7 );
       if( !this.req_part_id || this.mPartId == this.req_part_id ) {
 	// ensure these are null for the following case evaluation
 	this.cur_outstrm = null;
@@ -394,8 +394,9 @@ LookoutStreamListener.prototype = {
     
     if( !this.req_part_id || this.mPartId == this.req_part_id ) {
       switch( this.action_type ) {
+
       case LOOKOUT_ACTION_SAVE:
-        lookout.log_msg( "Saving attachment '" + this.cur_url.path + "'", 7 );
+        lookout.log_msg( "LookOut: Saving attachment '" + this.cur_url.path + "'", 7 );
         //	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec,
         //                            this.cur_filename, this.mMsgUri, true );
         try {
@@ -420,7 +421,7 @@ LookoutStreamListener.prototype = {
       break;
 
       case LOOKOUT_ACTION_OPEN:
-        lookout.log_msg( "Opening attachment '"+ this.cur_url.spec+"'", 7 );
+        lookout.log_msg( "LookOut: Opening attachment '"+ this.cur_url.spec+"'", 7 );
         if (lookout.get_bool_pref( "direct_to_calendar" )
             && this.cur_content_type == "text/calendar"
             && this.cur_outstrm_listener) {
@@ -503,13 +504,6 @@ var lookout_lib = {
   orig_onEndAllAttachments: null,
   orig_processHeaders: null,
 
-// ** TODO MKA ** remove this declarations ** start
-// **          ** check code before for other uses!
-  orig_openAttachment: null,
-  orig_saveAttachment: null,
-  orig_cloneAttachment: null,
-// ** TODO MKA ** remove this declarations ** end
-
   init_wait: 0,
 
   onload: function() {
@@ -518,8 +512,8 @@ var lookout_lib = {
     // For now monkey patch messageHeaderSink.onEndAllAttachments and messageHeaderSink.processHeaders
     // (see mail/base/content/msgHdrOverlay.js).
     
-    // Make sure other global init has finished e.g. messageHeaderSink
-    // has been defined
+    // Make sure other global init has finished
+    // e.g. messageHeaderSink has been defined
     if( typeof messageHeaderSink != 'undefined' && messageHeaderSink ) {
       lookout_lib.orig_onEndAllAttachments = messageHeaderSink.onEndAllAttachments;
       messageHeaderSink.onEndAllAttachments = lookout_lib.on_end_all_attachments;
@@ -527,12 +521,12 @@ var lookout_lib = {
     } else {
       lookout.log_msg( "LookOut: Registering messageHeaderSink.onEndAllAttachments failed", 2 );
       if ( lookout_lib.init_wait < LOOKOUT_WAIT_MAX ) {
-	lookout_lib.init_wait++;
-	lookout.log_msg( "LookOut: waiting for global init ("  + lookout_lib.init_wait + ")" );
-	setTimeout( lookout_lib.onload, LOOKOUT_WAIT_TIME );
-	return;
+        lookout_lib.init_wait++;
+        lookout.log_msg( "LookOut: waiting for global init ("  + lookout_lib.init_wait + ")" );
+        setTimeout( 'lookout_lib.onload()', LOOKOUT_WAIT_TIME );
+        return;
       } else {
-	lookout.log_msg( "LookOut: Warning initialisation incomplete", 2 );
+        lookout.log_msg( "LookOut: Warning initialisation incomplete", 2 );
       }
     }
     lookout.log_msg( "LookOut: Waited " + lookout_lib.init_wait + " times for global init" );
@@ -543,40 +537,12 @@ var lookout_lib = {
     listener.onEndHeaders = lookout_lib.on_end_headers;
     gMessageListeners.push( listener );
     
-// ** TODO MKA ** remove this code ** start
-
-    // FIXME - fix mozilla so there is a cleaner way here
-    // monkey patch the openAttachment and saveAttachment functions
-
-    // It was a general solution for every attachments.
+    //AR:  Monkey patch the openAttachment and saveAttachment functions
+    //MKA: It was a general solution for every attachments.
     // Fixed in version 1.2.12: the hook is added only to TNEF attachments
     //                          in function add_sub_attachment_to_list()
-    // openAttachment and saveAttachment functions are no longer available
-    // globally after Thunderbird 7. So this part is obsolate.
-
-    if( typeof openAttachment != 'undefined' && openAttachment ) {
-      // lookout.log_msg( "LookOut: openAttachment is found as\n\n" + openAttachment, 10);
-      lookout_lib.orig_openAttachment = openAttachment;
-      openAttachment = lookout_lib.open_attachment;
-      lookout.log_msg( "LookOut: Registering openAttachment hook", 6);  //MKA
-    } else {
-      lookout.log_msg( "LookOut: Registering openAttachment failed", 2);
-    }
-    if( typeof saveAttachment != 'undefined' && saveAttachment ) {
-      lookout_lib.orig_saveAttachment = saveAttachment;
-      saveAttachment = lookout_lib.save_attachment;
-      lookout.log_msg( "LookOut: Registering saveAttachment hook", 6);  //MKA
-    } else {
-      lookout.log_msg( "LookOut: Registering saveAttachment failed", 2);
-    }
-    if( typeof cloneAttachment != 'undefined' && cloneAttachment ) {
-      lookout_lib.orig_cloneAttachment = cloneAttachment;
-      cloneAttachment = lookout_lib.clone_attachment;
-      lookout.log_msg( "LookOut: Registering cloneAttachment hook", 6);  //MKA
-    } else {
-      lookout.log_msg( "LookOut: Registering cloneAttachment failed", 2);
-    }
-// ** TODO MKA ** remove this code ** end
+    // openAttachment() and saveAttachment() functions are globally no longer available
+    // after Thunderbird 7. So this part was obsolate.
   },
 
   msg_hdr_for_current_msg: function( msg_uri ) {
@@ -648,17 +614,6 @@ var lookout_lib = {
     lookout.log_msg( "LookOut: Entering add_sub_attachment_to_list()", 6);
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
     
-/*
-    var attachmentList = document.getElementById( 'attachmentList' );
-    var i = 0;
-    
-    for( i = 0; i < attachmentList.childNodes.length &&
-	        attachmentList.childNodes[i].attachment.url != attUrl; i++ );
-
-    // if we found our list item then we are done
-    if( i >= attachmentList.childNodes.length )
-      return;
-*/
     lookout.log_msg( "LookOut: content_type:" + content_type
                    + "\n         atturl:" + atturl
                    + "\n         display_name:" + display_name
@@ -742,12 +697,12 @@ var lookout_lib = {
     lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
 
     // There is no TNEF attachment, use the original OPEN function
+    //MKA: Though no longer necessary, since we register the own open_attachment()
+    //     function for TNEF attachments only (after version 1.2.12)
     if( !attachment.parent ||
 	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
-      if( attachment.lo_orig_open )
-	attachment.lo_orig_open();
-      else if( lookout_lib.orig_openAttachment )
-        lookout_lib.orig_openAttachment( attachment );
+      if( attachment.lo_orig_open )    // this is the original open() function
+	  attachment.lo_orig_open();
       return;
     }
 
@@ -790,12 +745,12 @@ var lookout_lib = {
     lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
 
     // There is no TNEF attachment, use the original SAVE function
+    //MKA: Though no longer necessary, since we register the own save_attachment()
+    //     function for TNEF attachments only (after version 1.2.12)
     if( !attachment.parent ||
 	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
-      if( attachment.lo_orig_save )
-	attachment.lo_orig_save();
-      else if( lookout_lib.orig_saveAttachment )
-        lookout_lib.orig_saveAttachment( attachment );
+      if( attachment.lo_orig_save )    // this is the original save() function
+	  attachment.lo_orig_save();
       return;
     }
     
@@ -824,46 +779,18 @@ var lookout_lib = {
     var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
               .QueryInterface( Components.interfaces.nsIMsgMessageService );
     attname = attachment.parent.name ? attachment.parent.name : attachment.parent.displayName;
-// ** TODO MKA ** correct function call ** start
+
+//MKA The comment is misleading, because it has nothing to do with the Save File Dialogue here.
+//    See onTnefEnd() in LookoutStreamListener.prototype!
     // Using the same function as for OPEN and hoping that the user has not set default action
     // for this file type...
     mms.openAttachment( attachment.parent.contentType, attname,
 			attachment.parent.url, stream_listener.mMsgUri, stream_listener, 
 			null, null );
-/*
-    // [xpconnect wrapped nsIMsgMessageService]
-    // http://mxr.mozilla.org/comm-central/source/mailnews/base/public/nsIMsgMessageService.idl#153
-    mms.SaveMessageToDisk( stream_listener.mMsgUri  // in string aMessageURI
-                         , ???                      // in nsIFile aFile
-                         , false                    // in boolean aGenerateDummyEnvelope
-                         , ??? null                 // in nsIUrlListener aUrlListener
-                         , ???                      // out nsIURI aURL
-                         , ???                      // in boolean canonicalLineEnding
-                         , null );                  // in nsIMsgWindow aMsgWindow
-*/
-// ** TODO MKA ** correct function call ** end
-  },
-
-  // Function not used!!!
-  // If needed add hook into add_sub_attachment_to_list()!
-  clone_attachment: function( attachment ) {
-    lookout.log_msg( "LookOut: Entering clone_attachment()", 6 ); //MKA
-    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
-
-    // There is no TNEF attachment, use the original CLONE function
-    if( !attachment.parent ||
-	!(/^application\/ms-tnef/i).test( attachment.parent.contentType ) ) {
-      return lookout_lib.orig_cloneAttachment( attachment );
-    }
-    
-    //TODO original code didn't clone. is it necessary?
-    var obj = lookout_lib.orig_cloneAttachment( attachment );
-    obj.parent = attachment.parent;
-    obj.part_id = attachment.part_id;
-    return obj;
   },
 
   on_end_all_attachments: function () {
+    lookout.log_msg( "LookOut: Entering on_end_all_attachments()", 6 ); //MKA
     //attachment parsing has finished
     lookout_lib.scan_for_tnef();
     //call hijacked onEndAllAttachments
