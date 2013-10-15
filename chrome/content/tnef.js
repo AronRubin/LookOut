@@ -387,13 +387,18 @@ function concat_fname( fname1, fname2 ) {
 }
 
 function fs_file_exists( fname ) {
+  //MKA  Mozilla suggests to replace nsILocalFile with nsIFile *if older versions*
+  //     *are not supported*. But we still want to!
+  //     'Local' was merged back into its parent class in Gecko 14 (Thunderbird 14 /
+  //     SeaMonkey 2.11), but it is not intended to remove the 'Loclal' interface.
+  //     https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Versions/14#Interfaces
   var lf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   lf.initWithPath( fname );
   return( lf.exists() );
 }
 
 // finds a filename fname.N where N >= 1 and is not the name of an existing
-//   filename.  Assumes that fname does not already have such an extension
+// filename.  Assumes that fname does not already have such an extension
 function fs_find_free_number( fname ) {
   var newname = "";
   var counter = 1;
@@ -1251,6 +1256,10 @@ function strtrim( str ) {
   return( match && match.length > 0 ? match[0] : '' );
 }
 
+//MKA  gHeaderParser was removed in Thunderbird 13, but nsIMsgHeaderParser is still
+//     available!
+//     https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIMsgHeaderParser
+
 // This is needed because nsIMsgHeaderParser cannot handle the commas MS allows
 // in the phrase and hangs if the email is invalid
 function decompose_rfc822_address( address ) {
@@ -1269,10 +1278,14 @@ function decompose_rfc822_address( address ) {
 }
 
 
-// forEach used below so ensure recomended implementation exists
+/*
+// .forEach used below to ensure that recomended implementation exists
+//MKA  Extension of a built-in JS type is not allowed by Mozilla.
+//     This code is no longer needed anyhow.
 if (!Array.prototype.forEach)
 {
-  Array.prototype.forEach = function(fun /*, thisp*/)
+  tnef_log_msg( "TNEF: Extending built-in Array type with .forEach()", 6 ); //MKA
+  Array.prototype.forEach = function(fun) //(fun, thisp)
   {
     var len = this.length;
     if (typeof fun != "function")
@@ -1285,9 +1298,12 @@ if (!Array.prototype.forEach)
         fun.call(thisp, this[i], i, this);
     }
   };
+} else {
+  tnef_log_msg( "TNEF: Built-in Array type has .forEach()", 6 ); //MKA
 }
+*/
 
-var gHeaderParser = Components.classes["@mozilla.org/messenger/headerparser;1"].getService(Components.interfaces.nsIMsgHeaderParser);
+var ownHeaderParser = Components.classes["@mozilla.org/messenger/headerparser;1"].getService(Components.interfaces.nsIMsgHeaderParser);
 
 function tnef_pack_get_name_addr( pkg, orig_name_addr ) {
   var orig_addr_parts = decompose_rfc822_address( orig_name_addr );
@@ -1306,13 +1322,13 @@ function tnef_pack_get_name_addr( pkg, orig_name_addr ) {
     
     orig_addr_parts[1] = "";
     
-    num_addrs = gHeaderParser.parseHeadersWithArray( pkg.msg_header.author, addrs, names, full_names );
+    num_addrs = ownHeaderParser.parseHeadersWithArray( pkg.msg_header.author, addrs, names, full_names );
     all_addrs = addrs.value;
     all_names = names.value;
-    num_addrs += gHeaderParser.parseHeadersWithArray( pkg.msg_header.recipients, addrs, names, full_names );
+    num_addrs += ownHeaderParser.parseHeadersWithArray( pkg.msg_header.recipients, addrs, names, full_names );
     all_addrs = all_addrs.concat( addrs.value );
     all_names = all_names.concat( names.value );
-    num_addrs += gHeaderParser.parseHeadersWithArray( pkg.msg_header.ccList, addrs, names, full_names );
+    num_addrs += ownHeaderParser.parseHeadersWithArray( pkg.msg_header.ccList, addrs, names, full_names );
     all_addrs = all_addrs.concat( addrs.value );
     all_names = all_names.concat( names.value );
     

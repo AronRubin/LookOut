@@ -87,6 +87,11 @@ var lookout = {
   },
   
   basename: function lo_basename( path ) {
+    //MKA  Mozilla suggests to replace nsILocalFile with nsIFile *if older versions*
+    //     *are not supported*. But we still want to!
+    //     'Local' was merged back into its parent class in Gecko 14 (Thunderbird 14 /
+    //     SeaMonkey 2.11), but it is not intended to remove the 'Loclal' interface.
+    //     https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Versions/14#Interfaces
     var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
     
     try {
@@ -279,6 +284,7 @@ LookoutStreamListener.prototype = {
   },
   
   onStopRequest: function ( aRequest, aContext, aStatusCode ) {
+    lookout.log_msg( "LookOut: Entering onStopRequest()", 6 ); //MKA
     var channel = aRequest.QueryInterface(Components.interfaces.nsIChannel);
     var fsm;
     
@@ -289,7 +295,7 @@ LookoutStreamListener.prototype = {
     }
 
     if( !(this.mMsgUri == fsm && this.mStream) ) {
-      lookout.log_msg( "LookOut: strange things a foot", 5 );
+      lookout.log_msg( "LookOut:    strange things a foot", 5 );
       aRequest.cancel( Components.results.NS_BINDING_ABORTED );
       return;
     }
@@ -301,6 +307,7 @@ LookoutStreamListener.prototype = {
   },
 
   onDataAvailable: function ( aRequest, aContext, aInputStream, aOffset, aCount ) {
+    lookout.log_msg( "LookOut: Entering onDataAvailable()", 6 ); //MKA
     var fsm;
     
     try {
@@ -310,7 +317,7 @@ LookoutStreamListener.prototype = {
     }
 
     if( this.mMsgUri != fsm ) {
-      lookout.log_msg( "LookOut: data available wrong", 15 ); //MKA 5
+      lookout.log_msg( "LookOut:    data available wrong", 15 ); //MKA 5
       aRequest.cancel( Components.results.NS_BINDING_ABORTED );
       return;
     }
@@ -336,11 +343,11 @@ LookoutStreamListener.prototype = {
     
     
     if( this.action_type == LOOKOUT_ACTION_SCAN ) {
-      lookout.log_msg( "LookOut: Adding attachment: " + mimeurl, 7 );
+      lookout.log_msg( "LookOut:    adding attachment: " + mimeurl, 7 );
       lookout_lib.add_sub_attachment_to_list( this.attachment, content_type, filename,
                                               this.mPartId, mimeurl, this.mMsgUri, length );
     } else {
-      lookout.log_msg( "LookOut: open or save: " + this.mAttUrl + "." + this.mPartId, 7 );
+      lookout.log_msg( "LookOut:    open or save: " + this.mAttUrl + "." + this.mPartId, 7 );
       if( !this.req_part_id || this.mPartId == this.req_part_id ) {
 	// ensure these are null for the following case evaluation
 	this.cur_outstrm = null;
@@ -376,15 +383,15 @@ LookoutStreamListener.prototype = {
 	}
       }
     }
-    lookout.log_msg( "LookOut: Parent: " + this.attachment
-		   + "\n         mMsgUri: " + this.mMsgUri
-		   + "\n         requested Part_ID: " + this.req_part_id
-		   + "\n         Part_ID: " + this.mPartId
-		   + "\n         Displayname: " + filename.split("\0")[0]
-		   + "\n         Content-Type: " + content_type.split("\0")[0]
-		   + "\n         Length: " + length
-		   + "\n         URL: " + (this.cur_url ? this.cur_url.spec : "")
-		   + "\n         mimeurl: " + (mimeurl ? mimeurl : ""), 7 );
+    lookout.log_msg( "LookOut:    Parent: " + this.attachment
+                   + "\n            mMsgUri: " + this.mMsgUri
+                   + "\n            requested Part_ID: " + this.req_part_id
+                   + "\n            Part_ID: " + this.mPartId
+                   + "\n            Displayname: " + filename.split("\0")[0]
+                   + "\n            Content-Type: " + content_type.split("\0")[0]
+                   + "\n            Length: " + length
+                   + "\n            URL: " + (this.cur_url ? this.cur_url.spec : "")
+                   + "\n            mimeurl: " + (mimeurl ? mimeurl : ""), 7 );
   },
 
   onTnefEnd: function ( ) {
@@ -396,13 +403,13 @@ LookoutStreamListener.prototype = {
       switch( this.action_type ) {
 
       case LOOKOUT_ACTION_SAVE:
-        lookout.log_msg( "LookOut: Saving attachment '" + this.cur_url.path + "'", 7 );
+        lookout.log_msg( "LookOut:     saving attachment '" + this.cur_url.path + "'", 7 );
         //	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec,
         //                            this.cur_filename, this.mMsgUri, true );
         try {
           var file = this.cur_url.QueryInterface(Components.interfaces.nsIFileURL).file;  		
         } catch (ex) {
-          alert("LookOut: error creating file : " + this.cur_url.path + " : " + ex);
+          alert("LookOut:     error creating file : " + this.cur_url.path + " : " + ex);
         }
         var nsIFilePicker = Components.interfaces.nsIFilePicker;
         var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
@@ -414,14 +421,14 @@ LookoutStreamListener.prototype = {
           try {
             file.moveTo(fp.displayDirectory, fp.file.leafName);
           } catch(ex) {
-            alert("LookOut: error moving file : " + fp.displayDirectory.path + " : "
-                  + fp.file.leafName + " : " + ex);
+            alert( "LookOut:     error moving file : " + fp.displayDirectory.path
+                 + " : " + fp.file.leafName + " : " + ex);
           }
         }
       break;
 
       case LOOKOUT_ACTION_OPEN:
-        lookout.log_msg( "LookOut: Opening attachment '"+ this.cur_url.spec+"'", 7 );
+        lookout.log_msg( "LookOut:     opening attachment '"+ this.cur_url.spec+"'", 7 );
         if (lookout.get_bool_pref( "direct_to_calendar" )
             && this.cur_content_type == "text/calendar"
             && this.cur_outstrm_listener) {
@@ -432,7 +439,7 @@ LookoutStreamListener.prototype = {
             cal_items = this.cur_outstrm_listener.importFromStream( instrm, { } );
             instrm.close();
           } catch (ex) {
-            lookout.log_msg( "LookOut: error opening calendar stream: " + ex, 3 );
+            lookout.log_msg( "LookOut:     error opening calendar stream: " + ex, 3 );
           }
           var count_o = new Object();
           var cal_mgr = Components.classes["@mozilla.org/calendar/manager;1"].getService(Components.interfaces.calICalendarManager);
@@ -475,10 +482,11 @@ LookoutStreamListener.prototype = {
   },
 
   onTnefData: function ( position, data ) {
-    lookout.log_msg( "LookOut: onTnefData position " + position + "  data.len " + data.length + "  outstrm " + this.cur_outstrm, 7 );
+    lookout.log_msg( "LookOut: onTnefData position " + position + "  data.len "
+                   + data.length + "  outstrm " + this.cur_outstrm, 7 );
     if( this.cur_outstrm ) {
       if( data ) {
-        lookout.log_msg( "LookOut: writing " + data.length + "bytes to file", 7 );
+        lookout.log_msg( "LookOut:    writing " + data.length + "bytes to file", 7 );
         this.cur_outstrm.write( data, data.length );
       }
     }
@@ -504,34 +512,21 @@ var lookout_lib = {
   orig_onEndAllAttachments: null,
   orig_processHeaders: null,
 
-  init_wait: 0,
+  startup: function() {
+    lookout.log_msg( "LookOut: Entering startup()", 6 ); //MKA
 
-  onload: function() {
-    lookout.log_msg( "LookOut: Entering onload()", 6 ); //MKA
     // FIXME - Register onEndAllAttachments listener with messageHeaderSink
-    // For now monkey patch messageHeaderSink.onEndAllAttachments and messageHeaderSink.processHeaders
+    // For now monkey patch messageHeaderSink.onEndAllAttachments (and messageHeaderSink.processHeaders?)
     // (see mail/base/content/msgHdrOverlay.js).
     
-    // Make sure other global init has finished
-    // e.g. messageHeaderSink has been defined
     if( typeof messageHeaderSink != 'undefined' && messageHeaderSink ) {
       lookout_lib.orig_onEndAllAttachments = messageHeaderSink.onEndAllAttachments;
       messageHeaderSink.onEndAllAttachments = lookout_lib.on_end_all_attachments;
-      lookout.log_msg( "LookOut: Registering messageHeaderSink.onEndAllAttachments hook", 6 );  //MKA
+      lookout.log_msg( "LookOut:    registering messageHeaderSink.onEndAllAttachments hook", 6 );  //MKA
     } else {
-      lookout.log_msg( "LookOut: Registering messageHeaderSink.onEndAllAttachments failed", 2 );
-      if ( lookout_lib.init_wait < LOOKOUT_WAIT_MAX ) {
-        lookout_lib.init_wait++;
-        lookout.log_msg( "LookOut: waiting for global init ("  + lookout_lib.init_wait + ")" );
-        setTimeout( 'lookout_lib.onload()', LOOKOUT_WAIT_TIME );
-        return;
-      } else {
-        lookout.log_msg( "LookOut: Warning initialisation incomplete", 2 );
-      }
+      lookout.log_msg( "LookOut:    failed to register messageHeaderSink.onEndAllAttachments hook", 2 );  //MKA
     }
-    lookout.log_msg( "LookOut: Waited " + lookout_lib.init_wait + " times for global init" );
-    lookout_lib.init_wait = 0;
-    
+
     var listener = {};
     listener.onStartHeaders = lookout_lib.on_start_headers;
     listener.onEndHeaders = lookout_lib.on_end_headers;
@@ -565,7 +560,7 @@ var lookout_lib = {
     }
     if( !hdr && gDBView.msgFolder ) {
       try {
-	hdr = gDBView.msgFolder.GetMessageHeader( gDBView.getKeyAt( gDBView.currentlyDisplayedMessage ) );
+        hdr = gDBView.msgFolder.GetMessageHeader( gDBView.getKeyAt( gDBView.currentlyDisplayedMessage ) );
       } catch( ex ) { }
     }
     if( !hdr && messageHeaderSink )
@@ -585,7 +580,7 @@ var lookout_lib = {
       lookout.log_msg( attachment.toSource(), 8 );
       // we only decode tnef files
       if( (/^application\/ms-tnef/i).test( attachment.contentType ) ) {
-        lookout.log_msg( "LookOut: found tnef", 7 );
+        lookout.log_msg( "LookOut:    found tnef", 7 );
 	
 	// open the attachment and look inside
 	var stream_listener = new LookoutStreamListener();
@@ -597,7 +592,7 @@ var lookout_lib = {
 	  stream_listener.mMsgUri = attachment.messageUri;
 	stream_listener.mMsgHdr = lookout_lib.msg_hdr_for_current_msg( stream_listener.mMsgUri );
 	if( ! stream_listener.mMsgHdr )
-	  lookout.log_msg( "LookOut: no message header for this service", 5 );
+	  lookout.log_msg( "LookOut:    no message header for this service", 5 );
 	stream_listener.action_type = LOOKOUT_ACTION_SCAN;
 	
 	var mms = messenger2.messageServiceFromURI( stream_listener.mMsgUri )
@@ -614,7 +609,7 @@ var lookout_lib = {
     lookout.log_msg( "LookOut: Entering add_sub_attachment_to_list()", 6);
     var prefs = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch);
     
-    lookout.log_msg( "LookOut: content_type:" + content_type
+    lookout.log_msg( "LookOut:   content_type:" + content_type
                    + "\n         atturl:" + atturl
                    + "\n         display_name:" + display_name
                    + "\n         msguri:" + msguri, 8 );
@@ -624,13 +619,13 @@ var lookout_lib = {
       // New naming -- used since Thunderbird 7.*
       // http://mxr.mozilla.org/comm-central/source/mail/base/content/msgHdrViewOverlay.js#1642
       var attachment = new AttachmentInfo( content_type, atturl, display_name, msguri, true, length );
-      lookout.log_msg( "LookOut: Found new object AttachmentInfo ~ Thunderbird 7", 6 );  //MKA
+      lookout.log_msg( "LookOut:    found new type object: AttachmentInfo ~ Thunderbird 7", 6 );  //MKA
     }
     else {
       // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
       // http://mxr.mozilla.org/comm-central/source/suite/mailnews/msgHdrViewOverlay.js#1201
       var attachment = new createNewAttachmentInfo( content_type, atturl, display_name, msguri, true );
-      lookout.log_msg( "LookOut: Found old object createNewAttachmentInfo ~ Seamonkey", 6 );  //MKA
+      lookout.log_msg( "LookOut:    found old type object: createNewAttachmentInfo ~ Seamonkey", 6 );  //MKA
     }
 
     if( attachment.open ) {
@@ -639,14 +634,14 @@ var lookout_lib = {
       attachment.open = function () {
         lookout_lib.open_attachment( this );
       };
-      lookout.log_msg( "LookOut: Registered own function for attachment.open", 6 );  //MKA
+      lookout.log_msg( "LookOut:    registered own function for attachment.open", 6 );  //MKA
     } else {
       // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
       attachment.lo_orig_open = attachment.openAttachment;
       attachment.openAttachment = function () {
         lookout_lib.open_attachment( this );
       };
-      lookout.log_msg( "LookOut: Registered own function for attachment.openAttachment", 6 );
+      lookout.log_msg( "LookOut:    registered own function for attachment.openAttachment", 6 );
     }
 
     if( attachment.save ) {
@@ -655,14 +650,14 @@ var lookout_lib = {
       attachment.save = function () {
         lookout_lib.save_attachment( this );
       };
-      lookout.log_msg( "LookOut: Registered own function for attachment.save", 6 );  //MKA
+      lookout.log_msg( "LookOut:    registered own function for attachment.save", 6 );  //MKA
     } else {
       // Old naming -- used in Seamonkey 2.* (until Thunderbird 3.*)
       attachment.lo_orig_save = attachment.saveAttachment;
       attachment.saveAttachment = function () {
         lookout_lib.save_attachment( this );
       };
-      lookout.log_msg( "LookOut: Registered own function for attachment.saveAttachment", 6 );
+      lookout.log_msg( "LookOut:    registered own function for attachment.saveAttachment", 6 );
     }
 
     attachment.parent = parent;
@@ -687,14 +682,14 @@ var lookout_lib = {
     // try to call "Attachment Sizes", extension {90ceaf60-169c-40fb-b224-7204488f061d}
     if( typeof ABglobals != 'undefined' ) {
       try {
-	ABglobals.setAttSizeTextFor( atturl, length, false );
+	      ABglobals.setAttSizeTextFor( atturl, length, false );
       } catch(ex) {}
     }
   },
 
   open_attachment: function ( attachment ) {
     lookout.log_msg( "LookOut: Entering open_attachment()", 6 ); //MKA
-    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
+    lookout.log_msg( "LookOut:    got attachment = " + attachment.toSource(), 10 );
 
     // There is no TNEF attachment, use the original OPEN function
     //MKA: Though no longer necessary, since we register the own open_attachment()
@@ -720,7 +715,7 @@ var lookout_lib = {
     
     var attname = attachment.name ? attachment.name : attachment.displayName;
 
-    lookout.log_msg( "LookOut: Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
+    lookout.log_msg( "LookOut:   Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
                    + "\n         Content-Type: " + attachment.contentType.split("\0")[0]
                    + "\n         Displayname: " + attname.split("\0")[0]
                    + "\n         Part_ID: " + attachment.part_id
@@ -742,7 +737,7 @@ var lookout_lib = {
 
   save_attachment: function ( attachment ) {
     lookout.log_msg( "LookOut: Entering save_attachment()", 6 ); //MKA
-    lookout.log_msg( "LookOut: Got attachment = " + attachment.toSource(), 10 );
+    lookout.log_msg( "LookOut:    got attachment = " + attachment.toSource(), 10 );
 
     // There is no TNEF attachment, use the original SAVE function
     //MKA: Though no longer necessary, since we register the own save_attachment()
@@ -769,7 +764,7 @@ var lookout_lib = {
     
     var attname = attachment.name ? attachment.name : attachment.displayName;
 
-    lookout.log_msg( "LookOut: Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
+    lookout.log_msg( "LookOut:   Parent: " + (attachment.parent == null ? "-" : attachment.parent.url)
                    + "\n         Content-Type: " + attachment.contentType.split("\0")[0]
                    + "\n         Displayname: " + attname.split("\0")[0]
                    + "\n         Part_ID: " + attachment.part_id
@@ -810,5 +805,32 @@ var lookout_lib = {
     //setTimeout( lookout_lib.scan_for_tnef, 100 );
   }
 }
-window.addEventListener( 'load', lookout_lib.onload, false );
+
+var  LookoutInitWait = 0;
+
+function LookoutLoad () {
+    lookout.log_msg( "LookOut: Entering LookoutLoad()", 6 ); //MKA
+    // Make sure other global init has finished
+    // e.g. messageHeaderSink has been defined
+    if( typeof messageHeaderSink == 'undefined' ) {
+      if ( LookoutInitWait < LOOKOUT_WAIT_MAX ) {
+        LookoutInitWaitt++;
+        lookout.log_msg( "LookOut:    waiting for global init [" + LookoutInitWait + "]", 6 );
+        //MKA  Function referencing in setTimeout() is deprecated by Mozilla,
+        //     so the following function expression is used.
+        //     https://developer.mozilla.org/en-US/docs/Web/API/window.setInterval
+        setTimeout( function() { LookoutLoad() }, LOOKOUT_WAIT_TIME );
+        return;
+      } else {
+        lookout.log_msg( "LookOut:    initialisation incomplete after "
+                       + LookoutInitWait + " trials. I give up!", 2 );
+        return;
+      }
+    }
+    LookoutInitWait = 0;
+    lookout_lib.startup();
+}
+
+//MKA  Adding callback to the mail window for starting addon.
+window.addEventListener( 'load', LookoutLoad, false );
 
