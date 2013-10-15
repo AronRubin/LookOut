@@ -11,7 +11,7 @@
  *   Calendaring and contact data is transcoded to standards formats.
  */
 
-const debugLevel = 5;
+const debugLevel = 7; //MKA Set 5 to switch off;
 
 
 const LVL_MESSAGE    = 0x1;
@@ -387,13 +387,18 @@ function concat_fname( fname1, fname2 ) {
 }
 
 function fs_file_exists( fname ) {
+  //MKA  Mozilla suggests to replace nsILocalFile with nsIFile *if older versions*
+  //     *are not supported*. But we still want to!
+  //     'Local' was merged back into its parent class in Gecko 14 (Thunderbird 14 /
+  //     SeaMonkey 2.11), but it is not intended to remove the 'Loclal' interface.
+  //     https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Versions/14#Interfaces
   var lf = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
   lf.initWithPath( fname );
   return( lf.exists() );
 }
 
 // finds a filename fname.N where N >= 1 and is not the name of an existing
-//   filename.  Assumes that fname does not already have such an extension
+// filename.  Assumes that fname does not already have such an extension
 function fs_find_free_number( fname ) {
   var newname = "";
   var counter = 1;
@@ -516,7 +521,8 @@ function tnef_file_write_stream( file, outstrm ) {
 
 
 function tnef_file_notify( file, listener, is_final ) {
-  tnef_log_msg( "LookOut: notifying listener of " + file.name + ", pos = " + file.position +
+  tnef_log_msg( "TNEF: Entering tnef_file_notify()", 6); //MKA
+  tnef_log_msg( "TNEF: Notifying listener of " + file.name + ", pos = " + file.position +
 	     ", has data = " + (file.data ? "true" : "false") +
 	     ", is final = " + is_final, 7 );
 
@@ -800,13 +806,14 @@ function tnef_attr_read( instrm, prev_attr ) {
     tnef_byte_pos += 9;
   }
   
-  tnef_log_msg( "reading attr" +
-		"  lvl_type 0x" + to_hex( attr.lvl_type, 1 ) +
-		"  name " + tnef_attr_name_to_string( attr.name ) +
-		"  type " + tnef_attr_type_to_string( attr.type ) +
-		"  length " + attr.len +
-		"  togo " + (attr.len - (attr.buf ? attr.buf.length : 0)) +
-		"  pos in TNEF " + tnef_byte_pos - 9, 6 );
+  tnef_log_msg( "TNEF: reading attr\n"
+                + "  lvl_type: 0x" + to_hex( attr.lvl_type, 1 )
+                + ",  name: " + tnef_attr_name_to_string( attr.name )
+                + ",  type: " + tnef_attr_type_to_string( attr.type )
+                + ",  length: " + attr.len
+                + ",  togo: " + (attr.len - (attr.buf ? attr.buf.length : 0))  // attr.buf might be NULL!
+                + ",  pos in TNEF: " + (tnef_byte_pos - 9)
+                , 15 );  //MKA 6
   
   var available = instrm.available();
   if( available > 0 ) {
@@ -833,7 +840,7 @@ function tnef_attr_read( instrm, prev_attr ) {
 	//tnef_attr_dbg_dump( attr );
       }
     } else {
-      tnef_log_msg( "waiting for " + (attr.len - attr.buf.length) + " more bytes", 8 );
+      tnef_log_msg( "TNEF: waiting for " + (attr.len - attr.buf.length) + " more bytes", 20 ); //MKA 8
     }
   }
   
@@ -1249,6 +1256,10 @@ function strtrim( str ) {
   return( match && match.length > 0 ? match[0] : '' );
 }
 
+//MKA  gHeaderParser was removed in Thunderbird 13, but nsIMsgHeaderParser is still
+//     available!
+//     https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIMsgHeaderParser
+
 // This is needed because nsIMsgHeaderParser cannot handle the commas MS allows
 // in the phrase and hangs if the email is invalid
 function decompose_rfc822_address( address ) {
@@ -1267,10 +1278,14 @@ function decompose_rfc822_address( address ) {
 }
 
 
-// forEach used below so ensure recomended implementation exists
+/*
+// .forEach used below to ensure that recomended implementation exists
+//MKA  Extension of a built-in JS type is not allowed by Mozilla.
+//     This code is no longer needed anyhow.
 if (!Array.prototype.forEach)
 {
-  Array.prototype.forEach = function(fun /*, thisp*/)
+  tnef_log_msg( "TNEF: Extending built-in Array type with .forEach()", 6 ); //MKA
+  Array.prototype.forEach = function(fun) //(fun, thisp)
   {
     var len = this.length;
     if (typeof fun != "function")
@@ -1283,9 +1298,12 @@ if (!Array.prototype.forEach)
         fun.call(thisp, this[i], i, this);
     }
   };
+} else {
+  tnef_log_msg( "TNEF: Built-in Array type has .forEach()", 6 ); //MKA
 }
+*/
 
-var gHeaderParser = Components.classes["@mozilla.org/messenger/headerparser;1"].getService(Components.interfaces.nsIMsgHeaderParser);
+var ownHeaderParser = Components.classes["@mozilla.org/messenger/headerparser;1"].getService(Components.interfaces.nsIMsgHeaderParser);
 
 function tnef_pack_get_name_addr( pkg, orig_name_addr ) {
   var orig_addr_parts = decompose_rfc822_address( orig_name_addr );
@@ -1304,13 +1322,13 @@ function tnef_pack_get_name_addr( pkg, orig_name_addr ) {
     
     orig_addr_parts[1] = "";
     
-    num_addrs = gHeaderParser.parseHeadersWithArray( pkg.msg_header.author, addrs, names, full_names );
+    num_addrs = ownHeaderParser.parseHeadersWithArray( pkg.msg_header.author, addrs, names, full_names );
     all_addrs = addrs.value;
     all_names = names.value;
-    num_addrs += gHeaderParser.parseHeadersWithArray( pkg.msg_header.recipients, addrs, names, full_names );
+    num_addrs += ownHeaderParser.parseHeadersWithArray( pkg.msg_header.recipients, addrs, names, full_names );
     all_addrs = all_addrs.concat( addrs.value );
     all_names = all_names.concat( names.value );
-    num_addrs += gHeaderParser.parseHeadersWithArray( pkg.msg_header.ccList, addrs, names, full_names );
+    num_addrs += ownHeaderParser.parseHeadersWithArray( pkg.msg_header.ccList, addrs, names, full_names );
     all_addrs = all_addrs.concat( addrs.value );
     all_names = all_names.concat( names.value );
     
@@ -1787,6 +1805,8 @@ function tnef_pack_parse_stream( instrm, msg_header, listener, prev_pack ) {
   var sig = 0;
   var key = 0;
   var pkg = null;
+
+  tnef_log_msg( "TNEF: Entering tnef_pack_parse_stream()", 6); //MKA
   
   if( prev_pack ) {
     pkg = prev_pack;
@@ -1815,7 +1835,7 @@ function tnef_pack_parse_stream( instrm, msg_header, listener, prev_pack ) {
   while( pkg.cur_attr && tnef_pack_data_left( instrm ) ) {
     if( pkg.cur_attr.name == TNEF_ATTR_OEM_CODEPAGE ) {
       pkg.code_page = GETINT32( pkg.cur_attr.buf );
-      tnef_log_msg( "Lookout: OEM Code Page = " + pkg.code_page, 7 );
+      tnef_log_msg( "TNEF: OEM Code Page = " + pkg.code_page, 7 );
     }
     // This signals the beginning of a file
     if( pkg.cur_attr.name == TNEF_ATTR_ATTACH_REND_DATA ) {

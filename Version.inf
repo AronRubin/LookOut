@@ -1,0 +1,7 @@
+Version 1.2.15
+2013-10-11  Taking over corrections for saving the attachment by Paul Richardson
+2013-10-11  Adding icons
+2013-10-12  Removed obsolete code
+2013-10-14  Code changes according to Mozilla validation results [setTimeout(), Array.prototype]
+2013-10-15  Code changes according to Mozilla validation results [nsILocalFile, gHeaderParser]
+
