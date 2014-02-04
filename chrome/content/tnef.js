@@ -11,7 +11,7 @@
  *   Calendaring and contact data is transcoded to standards formats.
  */
 
-const debugLevel = 5;
+const debugLevel = 10; //MKA 5;
 
 
 const LVL_MESSAGE    = 0x1;
@@ -800,13 +800,14 @@ function tnef_attr_read( instrm, prev_attr ) {
     tnef_byte_pos += 9;
   }
   
-  tnef_log_msg( "reading attr" +
-		"  lvl_type 0x" + to_hex( attr.lvl_type, 1 ) +
-		"  name " + tnef_attr_name_to_string( attr.name ) +
-		"  type " + tnef_attr_type_to_string( attr.type ) +
-		"  length " + attr.len +
-		"  togo " + (attr.len - (attr.buf ? attr.buf.length : 0)) +
-		"  pos in TNEF " + tnef_byte_pos - 9, 6 );
+  tnef_log_msg( "TNEF: reading attr\n"
+                + "  lvl_type: 0x" + to_hex( attr.lvl_type, 1 )
+                + ",  name: " + tnef_attr_name_to_string( attr.name )
+                + ",  type: " + tnef_attr_type_to_string( attr.type )
+                + ",  length: " + attr.len
+                + ",  togo: " + (attr.len - (attr.buf ? attr.buf.length : 0))  // attr.buf might be NULL!
+                + ",  pos in TNEF: " + (tnef_byte_pos - 9)
+                , 15 );  //MKA 6
   
   var available = instrm.available();
   if( available > 0 ) {
@@ -833,7 +834,7 @@ function tnef_attr_read( instrm, prev_attr ) {
 	//tnef_attr_dbg_dump( attr );
       }
     } else {
-      tnef_log_msg( "waiting for " + (attr.len - attr.buf.length) + " more bytes", 8 );
+      tnef_log_msg( "TNEF: waiting for " + (attr.len - attr.buf.length) + " more bytes", 20 ); //MKA 8
     }
   }
   
