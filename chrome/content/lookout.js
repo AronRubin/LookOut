@@ -393,8 +393,28 @@ LookoutStreamListener.prototype = {
     if( !this.req_part_id || this.mPartId == this.req_part_id ) {
       switch( this.action_type ) {
       case LOOKOUT_ACTION_SAVE:
-	lookout.log_msg( "Saving attachment '" + this.cur_url.spec + "'", 7 );
-	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec, this.cur_filename, this.mMsgUri, true );
+	    lookout.log_msg( "Saving attachment '" + this.cur_url.path + "'", 7 );
+		try {
+          var file = this.cur_url.QueryInterface(Components.interfaces.nsIFileURL).file;  		
+        } catch (ex) {
+	      alert("LookOut: error creating file : " + this.cur_url.path + " : " + ex);
+	    }
+        var nsIFilePicker = Components.interfaces.nsIFilePicker;
+        var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+        fp.init(window, "Select a File", nsIFilePicker.modeSave);	
+        fp.appendFilters(nsIFilePicker.filterAll);
+	    fp.defaultString = this.cur_filename;
+        var res = fp.show();
+        if (res != nsIFilePicker.returnCancel){
+		  try {
+	        file.moveTo(fp.displayDirectory, fp.file.leafName); 
+		  } catch(ex) {
+		    alert("LookOut: error moving file : " + fp.displayDirectory.path + " : " + fp.file.leafName +
+  			 " : " + ex);
+		  }
+        }		
+//	messenger.saveAttachment( this.cur_content_type, this.cur_url.spec, this.cur_filename, this.mMsgUri, true );
+
 	break;
       case LOOKOUT_ACTION_OPEN:
 	lookout.log_msg( "Opening attachment '"+ this.cur_url.spec+"'", 7 );
